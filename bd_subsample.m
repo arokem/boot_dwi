@@ -1,7 +1,7 @@
-function sample_bvecs = bd_subsample(bvecs,n)
+function [sample_bvecs, sample_idx] = bd_subsample(bvecs,n)
 
 %
-% function [x,y,z] = bd_sample(bvecs,n)
+% function [sample_bvecs, sample_idx] = bd_subsample(bvecs,n)
 % 
 % Generate a sub-sample of size n of directions from the provided x0,y0,z0. 
 % 
@@ -21,19 +21,7 @@ function sample_bvecs = bd_subsample(bvecs,n)
 % points in the directory camino_pts.
 % 
 
-bd_dir = fileparts(which(mfilename));
-
-pts_dir = fullfile(bd_dir,'camino_pts'); 
-
-elec_points = dlmread(fullfile(pts_dir, sprintf('Elec%03d.txt', n))); 
-
-% The first line should be equal to n: 
-assert(elec_points(1)==n, 'There is something wrong with the camino points file'); 
-
-% The format is: n,x1,y1,z1,x2,y2,z2 ... xn,yn,zn 
-elec_points = [elec_points(2:3:end),... 
-               elec_points(3:3:end),...    
-               elec_points(4:3:end)];
+elec_points = bd_read_epoints(n);
 
 % Since the camino points cover only a hemi-sphere, a random half of the
 % points need to be inverted by 180 degrees to account for potential
@@ -68,21 +56,32 @@ new_pts = rot * elec_points';
 
 % Pre-allocate for the return values 
 sample_bvecs = zeros(3,n); 
+sample_idx = zeros(1, n);
+
+% We will knock these out as we go along:
+potential_idx = [1:length(bvecs)];
 
 % Loop over the rotated eq points: 
 for i=1:n
     this = new_pts(:,i); 
     % For each one of the points, calculate the distance from all the bvecs: 
     delta = zeros(1,size(bvecs,2));  
-    for j=1:size(bvecs,2)
-        delta(j) = vector_angle(this, bvecs(:,j));
+    for j=1:length(bvecs)
+        delta(j) = vector_angle(this, bvecs(:, j));
     end
+    
+    this_idx = find(delta==min(delta));
+    
     % find and choose the bvec corresponding to the smallest distance from
     % where you ended up and add to the return value 
-    sample_bvecs(:,i) = bvecs(:,delta==min(delta));
+    sample_bvecs(:,i) = bvecs(:, this_idx);
+    sample_idx(i) = potential_idx(this_idx); 
+
+    % Knock out that index, so that it doesn't recur: 
+    potential_idx = cat(2, potential_idx(1:this_idx-1),...
+                           potential_idx(this_idx+1:end));
+
+    bvecs = cat(2, bvecs(:, 1:this_idx-1), bvecs(:, this_idx+1:end));
+
 end
-
-
-
-
 
