@@ -13,7 +13,10 @@ function [sample_bvecs, sample_idx] = bd_subsample(bvecs,n)
 % 
 % Returns 
 % -------
-% x,y,z: The coordinates of the sub-sample
+% sample_bvecs : the new b-vectors 
+%
+% sample_idx : The indices of the new b-vectors in the input `bvecs`
+% 
 % 
 % Notes
 % -----
@@ -59,7 +62,7 @@ sample_bvecs = zeros(3,n);
 sample_idx = zeros(1, n);
 
 % We will knock these out as we go along:
-potential_idx = [1:length(bvecs)];
+potential_idx = [1:size(bvecs, 2)];
 
 % Loop over the rotated eq points: 
 for i=1:n
@@ -84,4 +87,7 @@ for i=1:n
     bvecs = cat(2, bvecs(:, 1:this_idx-1), bvecs(:, this_idx+1:end));
 
 end
+
+% Match the input and the input:
+bvecs = bvecs'; 
 

@@ -51,9 +51,12 @@ assertAlmostEqual(a', rot *b')
 
 % Test that the bvectors you get back are unique:
 for i=1:10
-    bvecs_orig = bd_read_epoints(100);
-    [xyz, idx] = bd_subsample(bv_orig', 30);
+    bv_orig = bd_read_epoints(100);
+    bv_orig = bv_orig';
+    [xyz, idx] = bd_subsample(bv_orig, 30);
     assertEqual(length(unique(idx)), length(idx));
 end
+
+assertEqual(bv_orig(:, idx), xyz);
 
 
